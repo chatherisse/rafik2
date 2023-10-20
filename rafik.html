@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>&equiv;</title>
+<!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
+<style>
+/*@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@300&display=swap');*/
+@font-face {
+    font-family: 'Ubuntu';
+    src: local('Ubuntu Light Regular'), local('Ubuntu-Light'),
+        url('fonts/Ubuntu-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Ubuntu';
+    src: local('Ubuntu Light Italic'), local('Ubuntu-LightItalic'),
+        url('fonts/Ubuntu-LightItalic.woff2') format('woff2');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(fonts/google_material_icons.woff2) format('woff2');
+}
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+.material-icons.md-24 {font-size: 24px;}
+.material-icons.md-18 {font-size: 18px;}
+.material-icons.md-dark { color: rgba(0, 0, 0, 0.54); }
+.material-icons.md-dark.md-inactive { color: rgba(0, 0, 0, 0.26); }
+body, html {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	font-family: 'Ubuntu', sans-serif;
+}
+.clic, .storItem {cursor:pointer}
+#wrap {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+#main {
+	display: flex;
+	flex-grow: 1;
+}
+#preview {
+    display: flex;
+	flex: 1;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+#dropZone {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+	width: 500px;
+	height: 250px;
+	border: 5px dashed linen;
+}
+#svgPreview {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+	border: 1px solid darkgray;
+}
+#properties {
+	height: 100%;
+	width: 256px;
+	border-left: 1px solid lightgray;
+	display: none;
+}
+.dragHandle {
+	background-color: silver;
+	cursor: pointer;
+}
+#propDrag {
+	width: 8px;
+	height: 16px;
+}
+#propsWrap {
+    display: grid;
+    grid-template-rows: auto auto;
+}
+#props {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: auto;
+    gap: 5px;
+	margin: 10px 5px;
+}
+#props > div {
+    background-color: whitesmoke;
+    border: 1px solid lightgray;
+    padding: 3px;
+    font-size: 12px;
+    text-align: center;
+}
+.mixedProps {
+    display: grid;
+    grid-auto-rows: auto;
+}
+.mxp2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+.mxp3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+.propList {
+    grid-template-columns: 1fr;
+	grid-auto-rows: minmax(1.2em, auto);
+    gap: 5px;
+    margin: 10px 5px;
+	padding: 5px;
+    background-color: whitesmoke;
+    font-size: 12px;
+    align-self: flex-start;
+}
+#svgsList, #storList, #localBaseList {
+    display: none;
+}
+#animation {
+	flex-shrink: 0;
+	width: 100%;
+	height: 256px;
+	border-top: 1px solid lightgray;
+	display: none;
+}
+#animDrag {
+	width: 16px;
+	height: 8px;
+}
+#prefsWrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+#prefs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: auto;
+    gap: 5px;
+    background-color: gainsboro;
+    padding: 10px;
+    font-size: 16px;
+    text-align: center;
+    max-width: 80%;
+    max-height: 80%;
+    overflow-y: auto;
+}
+@media screen and (min-width: 640px) {
+    #prefs {grid-template-columns: repeat(3, 1fr)}
+}
+@media screen and (min-width: 800px) {
+    #prefs {grid-template-columns: repeat(4, 1fr)}
+}
+@media screen and (min-width: 1024px) {
+    #prefs {grid-template-columns: repeat(6, 1fr)}
+}
+</style>
+<!--https://github.com/nbubna/store
+	https://github.com/dannyconnell/localbase#quick-start-->
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/store2/2.14.2/store2.min.js"></script>
+	<script src="https://unpkg.com/localbase/dist/localbase.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+-->
+<script src="js/store2.min.js"></script>
+<script src="js/localbase.min.js"></script>
+<script src="js/three147.min.js"></script>
+<script src="js/three147-gltfLoader.min.js"></script>
+<script src="js/three147-orbitControl.min.js"></script>
+</head>
+<body>
+<div id="wrap">
+  	<div id="main">
+		<div id="preview">
+			<div id="dropZone">drop SVGs or GLTFs here</div>
+		</div>
+		<div id="properties">
+			<div id="propDrag" class="dragHandle"></div>
+			<div id="propsWrap">
+				<div id="props">
+					<div id="prop01" class="mixedProps mxp3">
+						<div id="setPrefs" class="material-icons md-dark md-24 clic" title="settings">settings</div>
+						<div id="storListBtn" class="material-icons md-dark md-24 clic" title="list of stored vars">list</div>
+						<div id="storUsed"></div>
+					</div>
+					<div id="prop02">
+						<span id="fitScreen" class="material-icons md-dark md-24 clic" title="fit screen">fit_screen</span>
+						<span id="scale1" class="material-icons md-dark md-24 md-inactive clic" title="scale 1:1">image</span>
+						<span id="zoom200" class="material-icons md-dark md-24 md-inactive" title="zoom 200%">zoom_in</span>
+						<span id="zoom400" class="material-icons md-dark md-24 md-inactive" title="zoom 400%">loupe</span>
+					</div>
+					<div id="prop03" class="mixedProps mxp2">
+						<div id="localBaseListBtn" class="material-icons md-dark md-24 clic" title="list of stored svgs">storage</div>
+						<div id="localBaseUsed"></div>
+					</div>
+					<div id="prop04">4</div>
+					<div id="prop05">5</div>
+					<div id="prop06">6</div>
+					<div id="prop07">7</div>
+					<div id="prop08">8</div>
+					<div id="prop09">9</div>
+					<div id="prop10">10</div>
+					<div id="prop11">11</div>
+					<div id="prop12"><img src="svgs/raf.ik_logo.svg" /></div>
+				</div>
+				<div id="svgsList" class="propList"></div>
+				<div id="gltfsList" class="propList"></div>
+				<div id="storList" class="propList"></div>
+				<div id="localBaseList" class="propList"></div>
+			</div>
+		</div>
+	</div>
+	<div id="animation">
+		<div id="animDrag" class="dragHandle"></div>
+	</div>
+</div>
+<div id="prefsWrap">
+	<div id="prefs">
+		<div id="pref01"><i id="clearStor" class="material-icons md-dark md-24 clic" title="clear preferences">delete</i></div>
+		<div id="pref02">2</div>
+		<div id="pref03">3</div>
+		<div id="pref04">4</div>
+		<div id="pref05">5</div>
+		<div id="pref06">6</div>
+		<div id="pref07">7</div>
+		<div id="pref08">8</div>
+		<div id="pref09">9</div>
+		<div id="pref10">10</div>
+		<div id="pref11">11</div>
+		<div id="pref12">12</div>
+	</div>
+</div>
+
+<script>
+"use strict";
+(function(){
+const qSlc = function(e) {return document.querySelector(e)},
+	main = qSlc("#main"),
+	preview = qSlc("#preview"),
+	dropZone = qSlc("#dropZone"),
+	properties = qSlc("#properties"),
+	propDrag = qSlc("#propDrag"),
+	propsWrap = qSlc("#propsWrap"),
+	props = qSlc("#props"),
+	setPrefs = qSlc("#setPrefs"),
+	fitScreen = qSlc("#fitScreen"),
+	scale1 = qSlc("#scale1"),
+	zoom200 = qSlc("#zoom200"),
+	zoom400 = qSlc("#zoom400"),
+	svgsList = qSlc("#svgsList"),
+	gltfsList = qSlc("#svgsList"),
+	storList = qSlc("#storList"),
+	storListBtn = qSlc("#storListBtn"),
+	storUsed = qSlc("#storUsed"),
+	localBaseList = qSlc("#localBaseList"),
+	localBaseListBtn = qSlc("#localBaseListBtn"),
+	localBaseUsed = qSlc("#localBaseUsed"),
+	animation = qSlc("#animation"),
+	animDrag = qSlc("#animDrag"),
+    prefsWrap = qSlc("#prefsWrap"),
+	clearStor = qSlc("#clearStor"),
+//=======================================================
+	propW_1col = 128,
+	propWidth = 256,
+	propW_3cols = 400,
+	propW_4cols = 550,
+	animHeight = 256,
+	zoomSteps = .03,
+//=======================================================
+	storPropWidth = store.get('propWidth') ? store.get('propWidth') : propWidth,
+	storAnimHeight = store.get('animHeight') ? store.get('animHeight') : animHeight;
+var svgPreview,
+	vBox=[],
+	maxFileNameLength,
+	db = new Localbase('db');
+let dragProp = false,
+	dragAnim = false,
+	mousePos = {x:0,y:0},
+	spaceBar = false,
+	isPanning = false,
+	currentScale = 1;
+
+function toggleDisplay(element) {
+	if (element.style.display === "none") {
+		element.style.display = element.id === "properties" ? "block" : "flex";
+		main.style.flexGrow = "0";
+		main.style.height = "calc(100% - 256px)";
+		store.set('panlsDisp', true);
+	} else {
+		element.style.display = "none";
+		main.style.flexGrow = "1";
+		store.set('panlsDisp', false);
+	}
+}
+function panlsTogl() {
+	toggleDisplay(properties);
+	toggleDisplay(animation);
+}
+function togglePrefs() {
+    if (prefsWrap.style.display === "none") {
+        prefsWrap.style.display = "flex";
+    } else {
+        prefsWrap.style.display = "none";
+    }
+}
+function resetDimensions() {
+    store.remove('propWidth');
+    store.remove('animHeight');
+    properties.style.width = propWidth;
+    animation.style.height = animHeight;
+    main.style.height = 'calc(100% - 256px)';
+}
+function updateGridColumns(width=propsWrap.clientWidth) {
+    if (width <= propW_1col) {
+        props.style.gridTemplateColumns = 'repeat(1, 1fr)';
+		maxFileNameLength = 10;
+    } else if (width <= propWidth) {
+        props.style.gridTemplateColumns = 'repeat(2, 1fr)';
+		maxFileNameLength = 20;
+    } else if (width <= propW_3cols) {
+        props.style.gridTemplateColumns = 'repeat(3, 1fr)';
+		maxFileNameLength = 30;
+    } else if (width <= propW_4cols) {
+        props.style.gridTemplateColumns = 'repeat(4, 1fr)';
+		maxFileNameLength = 50;
+    } else {
+        props.style.gridTemplateColumns = 'repeat(6, 1fr)';
+		maxFileNameLength = 70;
+    }
+}
+function svgCreate(content) {
+    const parser = new DOMParser(),
+        svgDoc = parser.parseFromString(content, 'image/svg+xml'),
+        images = svgDoc.querySelectorAll('image'),
+		svgEl = svgDoc.querySelector('svg'),
+		svgElWH = svgEl.getAttribute('width') ? [svgEl.getAttribute('width'), svgEl.getAttribute('height')] : "";
+	if (!svgEl.getAttribute('viewBox')) svgEl.setAttribute('viewBox', `0 0 ${svgElWH[0]} ${svgElWH[1]}`)
+	if (svgElWH) {
+		svgEl.removeAttribute('width');
+		svgEl.removeAttribute('height');
+	}
+    images.forEach((img) => {
+        const href = img.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+        if (!href.startsWith('data:') && !href.startsWith('http')) {
+            img.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', './svgs/' + href);
+        }
+    });
+    const serializer = new XMLSerializer(),
+        updatedSvg = serializer.serializeToString(svgDoc.documentElement),
+        svgWrap = document.createElement("div");
+    svgWrap.innerHTML = updatedSvg;
+    const newSvgElement = svgWrap.querySelector("svg");
+    newSvgElement.id = "svgPreview";
+    const oldSvgPreview = qSlc("#svgPreview");
+    if (oldSvgPreview) preview.removeChild(oldSvgPreview)
+    preview.insertBefore(newSvgElement, dropZone);
+    return newSvgElement;
+}
+function svgList(fileObj, content) {
+    const listItem = document.createElement("div"),
+        svgCount = svgsList.childElementCount;
+    let truncatedName = fileObj.name.length > maxFileNameLength
+        ? fileObj.name.slice(0, maxFileNameLength - 3) + "..."
+        : fileObj.name;
+    listItem.textContent = truncatedName;
+    listItem.title = fileObj.name;
+    listItem.style.cursor = "pointer";
+    svgsList.appendChild(listItem);
+    dropZone.style.display = "none";
+    svgsList.style.display = "grid";
+    listItem.addEventListener("click", () => {
+        db.collection("svgFiles").doc(fileObj.name).get()
+        .then(() => {
+            db.collection("svgFiles").doc(fileObj.name).get()
+            .then(doc => {
+                if (doc) {
+                    const svgContent = doc.content,
+                        svgElement = svgCreate(svgContent);
+                    svgPreview = svgElement;
+                    vBox = svgPreview.getAttribute("viewBox").split(" ");
+					resizeSVG('scale1');
+					currentScale = 1;
+                    if (store.get("activeView")) resizeSVG(store.get("activeView"));
+                    else resizeSVG("fitScreen");
+                }
+            });
+        })
+        .catch(error => {console.error(error);});
+    });
+}
+function binStr2arBuf(binaryString) {
+    const buffer = new ArrayBuffer(binaryString.length),
+    bufferView = new Uint8Array(buffer);
+    for (let i = 0; i < binaryString.length; i++) {
+        bufferView[i] = binaryString.charCodeAt(i);
+    }
+    return buffer;
+}
+function gltfList(fileObj, content) {
+    const listItem = document.createElement("div"),
+        gltfCount = gltfsList.childElementCount;
+    let truncatedName = fileObj.name.length > maxFileNameLength
+        ? fileObj.name.slice(0, maxFileNameLength - 3) + "..."
+        : fileObj.name;
+    listItem.textContent = truncatedName;
+    listItem.title = fileObj.name;
+    listItem.style.cursor = "pointer";
+    gltfsList.appendChild(listItem);
+    dropZone.style.display = "none";
+    gltfsList.style.display = "grid";
+	listItem.addEventListener("click", () => {
+	db.collection("gltfFiles").doc(fileObj.name).get()
+	.then((doc) => {
+		if (doc && doc.content) {
+			const binaryString = doc.content,
+				arrayBuffer = binStr2arBuf(binaryString),
+				gltfContent = new Blob([arrayBuffer], { type: 'model/gltf-binary' }),
+				gltfUrl = URL.createObjectURL(gltfContent);
+			loadGLTF(gltfUrl);
+		}
+	})
+    .catch(error => {console.error(error);});
+});
+}
+function storeUsage() {
+    let usedBytes = 0;
+    for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+            usedBytes += (localStorage[key].length * 2);
+        }
+    }
+    return (usedBytes / 1024).toFixed(2);
+}
+function getStorList() {
+	storList.innerHTML = "";
+	for (const key in store.getAll()) {
+		const listItem = document.createElement("div");
+		listItem.textContent = key;
+		listItem.className = "storItem";
+		listItem.addEventListener("click", () => {
+			store.remove(key);
+			getStorList();
+		});
+		storList.appendChild(listItem);
+	}
+}
+async function getAllSvgFiles() {
+    const snapshot = await db.collection('svgFiles').get(),
+    	svgFiles = [];
+    snapshot.forEach(doc => {
+		const content = doc.content || '';
+		svgFiles.push({ id: doc.id, name: doc.name,content });
+    });
+    return svgFiles;
+}
+async function getDBList() {
+    localBaseList.innerHTML = "";
+    localBaseList.style.display = "block";
+    const svgFiles = await getAllSvgFiles();
+    for (const svg of svgFiles) {
+        const listItem = document.createElement("div");
+        listItem.textContent = svg.name;
+        listItem.className = "storItem";
+        listItem.addEventListener("click", async () => {
+            await db.collection('svgFiles').doc(svg.id).delete();
+            getDBList();
+        });
+        localBaseList.appendChild(listItem);
+    }
+}
+async function dbUsage() {
+    let usedBytes = 0;
+    const svgFiles = await getAllSvgFiles();
+    for (const svg of svgFiles) {
+		const entrySize = (svg.content.length * 2);
+        usedBytes += entrySize;
+    }
+    return (usedBytes / 1024).toFixed(2);
+}
+async function storeSVG(name, content) {
+    await db.collection('svgFiles').add({
+        name: name,
+        content: content
+    });
+}
+async function loadStoredSVGs() {
+	return new Promise(async (resolve) => {
+		const svgFiles = await db.collection('svgFiles').get();
+		if (svgFiles && svgFiles.length > 0) {
+			svgFiles.forEach(svg => svgList({name: svg.name}, svg.content));
+			dropZone.style.display = "none";
+			svgsList.style.display = "grid";
+		}
+		resolve();
+	});
+}
+function onWinResize(renderer, camera) {
+	const pxro = window.devicePixelRatio || 1,
+		pwh = [preview.clientWidth,preview.clientHeight],
+		prwh = [pwh[0]*pxro,pwh[1]*pxro];
+    camera.aspect = pwh[0]/pwh[1];
+    camera.updateProjectionMatrix();
+    renderer.domElement.style.width = pwh[0];
+    renderer.domElement.style.height = pwh[1];
+	console.log(pwh)
+	renderer.setSize(prwh[0],prwh[1], false);
+}
+function loadGLTF(url) {
+	const scene = new THREE.Scene(),
+		renderer = new THREE.WebGLRenderer(),
+		loader = new THREE.GLTFLoader(),
+		camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+		camera.position.x = 1;
+		camera.position.y = 1;
+		camera.position.z = 1;
+	const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    renderer.domElement.style.width = "100%";
+    renderer.domElement.style.height = "100%";
+	preview.innerHTML = '';
+	preview.appendChild(renderer.domElement);
+	window.addEventListener("resize", () => {
+        onWinResize(renderer, camera);
+    });
+	loader.load(
+		url,
+		(gltf) => {
+			scene.add(gltf.scene);
+			console.log(gltf.scene);
+			onWinResize(renderer, camera);
+		},
+		undefined,
+		(error) => {console.error(error);}
+	);
+	function animate() {
+	requestAnimationFrame(animate);
+	controls.update();
+	renderer.render(scene, camera);
+	}
+	animate();
+}
+function arBuf2binStr(buffer) {
+    const byteArray = new Uint8Array(buffer),
+    binaryString = byteArray.reduce((str, byte) => str + String.fromCharCode(byte), "");
+    return binaryString;
+}
+function dropdFiles(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+    const files = evt.dataTransfer.files;
+    let validFileCount = 0;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file && file.type === "image/svg+xml") {
+            validFileCount++;
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+				const content = event.target.result;
+				await db.collection("svgFiles").doc(file.name).set({
+                    name: file.name,
+                    content: content
+                });
+                svgList({name: file.name}, content);
+				updateLocalBaseUsed();
+            };
+            reader.readAsText(file);
+        } else if (file && file.type === "model/gltf-binary") {
+			validFileCount++;
+			const reader = new FileReader();
+			reader.onload = async (event) => {
+				const binaryString = arBuf2binStr(event.target.result);
+				await db.collection("gltfFiles").doc(file.name).set({
+					name: file.name,
+					content: binaryString
+				});
+				gltfList({name: file.name}, event.target.result);
+				updateLocalBaseUsed();
+			};
+			reader.readAsArrayBuffer(file);
+		}
+    }
+    if (validFileCount === 0) {
+        alert("SVGs or GLTFs only please!");
+    }
+}
+function resizeSVG(mode) {
+	var updateStyle = function (target, active) {
+		if (active) target.classList.remove("md-inactive")
+		else target.classList.add("md-inactive")
+	},
+		viewButtons = ['#fitScreen', '#scale1', '#zoom200', '#zoom400'];
+	for (let viewButton of viewButtons) {
+		let buttonElement = qSlc(viewButton);
+		updateStyle(buttonElement, viewButton === `#${mode}`);
+	}
+	store.set("activeView",mode);
+	if (svgPreview) {
+		var setAtrs = function(sc) {
+				svgPreview.setAttribute('width', vBox[2] * sc);
+				svgPreview.setAttribute('height', vBox[3] * sc);
+			},
+			updateZoom = function (zoom) {
+					let zsc = zoom === 'zoom200' ? 2 : 4;
+					let sc = svgPreview.clientWidth/vBox[2],
+					offsetXY = [(mousePos.x-svgPreview.getBoundingClientRect().left)/sc,
+					(mousePos.y-svgPreview.getBoundingClientRect().top)/sc],
+					newXY = [(offsetXY[0]-(vBox[2]/zsc)/2), (offsetXY[1]-(vBox[3]/zsc)/2)];
+				svgPreview.setAttribute('viewBox', `${newXY[0]} ${newXY[1]} ${vBox[2] / zsc} ${vBox[3] / zsc}`);
+			},
+			updatePan = function () {
+				let acVw = store.get("activeView"),
+				startPoint = { x: 0, y: 0 };
+				svgPreview.addEventListener('mousedown', (event) => {
+					if (!spaceBar) return;
+					isPanning = true;
+					startPoint.x = event.clientX;
+					startPoint.y = event.clientY;
+				});
+				svgPreview.addEventListener('mousemove', (event) => {
+					if (!isPanning || !spaceBar) return;
+					let dx = event.clientX - startPoint.x,
+						dy = event.clientY - startPoint.y,
+						viewBoxValues = svgPreview.getAttribute('viewBox').split(' ').map(parseFloat);
+					viewBoxValues[0] -= dx / (svgPreview.clientWidth / viewBoxValues[2]);
+					viewBoxValues[1] -= dy / (svgPreview.clientHeight / viewBoxValues[3]);
+					svgPreview.setAttribute('viewBox', `${viewBoxValues[0]} ${viewBoxValues[1]} ${viewBoxValues[2]} ${viewBoxValues[3]}`);
+					startPoint.x = event.clientX;
+					startPoint.y = event.clientY;
+				});
+				svgPreview.addEventListener('mouseup', () => {
+					if (!spaceBar) return;
+					isPanning = false;
+				});
+				svgPreview.addEventListener('mouseleave', () => {
+					if (!spaceBar) return;
+					isPanning = false;
+				});
+			};
+		if (mode === 'fitScreen') {
+			svgPreview.removeAttribute('width');
+			svgPreview.removeAttribute('height');
+			svgPreview.setAttribute('viewBox', `0 0 ${vBox[2]} ${vBox[3]}`);
+		} else if (mode === 'scale1') {
+			setAtrs(1);
+			svgPreview.setAttribute('viewBox', `0 0 ${vBox[2]} ${vBox[3]}`);
+		} else if (mode === 'zoom200' || mode === 'zoom400') {
+			updateZoom(mode);
+		}
+		updatePan();
+		svgPreview.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+		svgPreview.addEventListener('wheel', (event) => {
+			event.preventDefault();
+			const delta = event.deltaY,
+				scaleFactor = delta > 0 ? 1-zoomSteps : 1+zoomSteps,
+				newScale = currentScale * scaleFactor;
+			currentScale = newScale;
+			const currentViewBox = svgPreview.getAttribute("viewBox").split(" ").map(parseFloat),
+				mouseX = (event.clientX - svgPreview.getBoundingClientRect().left) * (currentViewBox[2] / svgPreview.clientWidth),
+  				mouseY = (event.clientY - svgPreview.getBoundingClientRect().top) * (currentViewBox[3] / svgPreview.clientHeight),
+				newWidth = vBox[2] * newScale,
+				newHeight = vBox[3] * newScale,
+				offsetX = mouseX * (1 - scaleFactor),
+				offsetY = mouseY * (1 - scaleFactor),
+				newViewBox = [
+					currentViewBox[0] + offsetX,
+					currentViewBox[1] + offsetY,
+					newWidth,
+					newHeight
+				];
+			svgPreview.setAttribute("viewBox", newViewBox.join(" "));
+		});
+	}
+}
+function onMouseMove(e) {
+	mousePos.x = e.clientX;
+    mousePos.y = e.clientY;
+	if (dragProp) {
+        properties.style.width = window.innerWidth-e.clientX + 'px';
+		updateGridColumns();
+	}
+	if (dragAnim) {
+		let newHeight = window.innerHeight - e.clientY;
+		animation.style.height = newHeight + 'px';
+		main.style.height = `calc(100% - ${newHeight}px)`;
+	}
+}
+function onMouseUp() {
+	if (dragProp) store.set('propWidth', parseInt(properties.style.width, 10))
+    if (dragAnim) store.set('animHeight', parseInt(animation.style.height, 10))
+	dragProp = false;
+	dragAnim = false;
+	document.body.style.userSelect = 'auto';
+}
+async function init() {
+	if (storPropWidth) properties.style.width = storPropWidth + 'px'
+	updateGridColumns(storPropWidth);
+	if (storAnimHeight) {
+		animation.style.height = storAnimHeight + 'px';
+		main.style.height = `calc(100% - ${storAnimHeight}px)`;
+	}
+    if (store.get('panlsDisp')===true) {
+		panlsTogl();
+		panlsTogl();
+	}
+	if (store.get('activeView')) {
+		const pv = store.get('activeView'),
+		view2apply = (pv === 'zoom200' || pv === 'zoom400') ? 'fitScreen' : pv;
+		resizeSVG(view2apply);
+	}
+	storUsed.textContent = `${(JSON.stringify(store.getAll()).length / 1024).toFixed(2)}`;
+	await loadStoredSVGs();
+	await updateLocalBaseUsed();
+}
+
+document.addEventListener("keydown", event => {
+	if (event.key === "p") panlsTogl()
+	else if (event.key === "1") resizeSVG('fitScreen')
+	else if (event.key === "2") resizeSVG('scale1')
+	else if (event.key === "3" && svgPreview.matches(':hover')) resizeSVG('zoom200')
+    else if (event.key === "4" && svgPreview.matches(':hover')) resizeSVG('zoom400')
+	else if (event.key === " ") spaceBar = true
+});
+document.addEventListener("keyup", event => {
+    if (event.key === " ") spaceBar = false
+});
+document.addEventListener('mousemove', onMouseMove);
+document.addEventListener('mouseup', onMouseUp);
+fitScreen.addEventListener('click', () => resizeSVG('fitScreen'));
+scale1.addEventListener('click', () => resizeSVG('scale1'));
+dropZone.addEventListener("dragover", (evt) => evt.preventDefault());
+dropZone.addEventListener("drop", dropdFiles);
+propDrag.addEventListener('mousedown', () => {
+	dragProp = true;
+	document.body.style.userSelect = 'none';
+});
+setPrefs.addEventListener('click', (event) => {
+    event.stopPropagation();
+    qSlc("#prefsWrap").style.display = 'flex';
+});
+localBaseListBtn.addEventListener("click", async () => {
+    svgsList.innerHTML = "";
+    let svg = document.querySelector('#preview svg');
+    if (svg) svg.remove();
+    dropZone.style.display = "flex";
+    preview.insertBefore(dropZone, preview.firstChild);
+    await db.collection('svgFiles').delete();
+    storUsed.textContent = `${(JSON.stringify(store.getAll()).length / 1024).toFixed(2)}KB`;
+	updateLocalBaseUsed();
+	svgsList.style.display = "none";
+});
+storListBtn.addEventListener("click", () => {
+	if (storList.style.display === "none") {
+		storList.style.display = "block";
+		getStorList();
+	} else storList.style.display = "none"
+});
+async function updateLocalBaseUsed() {
+    const usedSpace = await dbUsage();
+    localBaseUsed.textContent = `${usedSpace}KB`;
+}
+animDrag.addEventListener('mousedown', () => {
+	dragAnim = true;
+	document.body.style.userSelect = 'none';
+});
+prefsWrap.addEventListener('click', (event) => {
+    if (!prefs.contains(event.target) && event.target !== prefs) {
+        prefsWrap.style.display = 'none';
+    }
+});
+clearStor.addEventListener('click', resetDimensions);
+document.addEventListener('DOMContentLoaded', init, false);
+})();
+</script>
+</body>
+</html>
